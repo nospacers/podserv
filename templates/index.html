@@ -3,131 +3,243 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
-  <meta name="description" content="Self-hosted podcast player for Raspberry Pi with downloads and offline playback.">
+  <meta name="theme-color" content="#f6f6f8">
+  <meta name="description" content="Self-hosted Raspberry Pi podcast player with downloads and offline listening.">
   <title>Podcast Pi Player</title>
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar card">
-      <div class="topbar-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px;">
-        {% if logged_in %}
-        <form method="post" action="{{ url_for('logout') }}">
-          <button type="submit">Log out</button>
-        </form>
-        {% endif %}
-      </div>
-
-      <div class="brand-row">
-        <div class="brand-icon">🎙️</div>
+<body class="app-body">
+  <div class="layout-shell">
+    <aside class="sidebar-panel">
+      <div class="sidebar-brand">
         <div>
           <h1>Podcast Pi Player</h1>
-          <p class="muted">Raspberry Pi server + PWA offline mode</p>
+          <p>Premium listening, self-hosted on your Raspberry Pi</p>
         </div>
       </div>
 
-      <label class="label" for="feedUrl">Podcast RSS feed</label>
-      <div class="input-row">
-        <input id="feedUrl" type="url" placeholder="Paste a podcast RSS URL">
-        <button id="loadFeedBtn" class="primary">Load</button>
-      </div>
+      <nav class="sidebar-nav">
+        <a href="#playerArea" class="nav-link active">
+          <span class="material-symbols-outlined">home</span>
+          <span>Home</span>
+        </a>
+        <a href="#libraryArea" class="nav-link">
+          <span class="material-symbols-outlined">library_music</span>
+          <span>Library</span>
+        </a>
+        <a href="#downloadsArea" class="nav-link">
+          <span class="material-symbols-outlined">download</span>
+          <span>Downloads</span>
+        </a>
+        <a href="#episodesSection" class="nav-link">
+          <span class="material-symbols-outlined">queue_music</span>
+          <span>Episodes</span>
+        </a>
+      </nav>
 
-      <div class="sub-actions">
-        <button id="saveSubscriptionBtn">Save</button>
-        <button id="refreshBtn">Refresh</button>
-      </div>
+      <section class="sidebar-card composer-card">
+        <div class="card-header">
+          <div>
+            <p class="eyebrow">Feed source</p>
+            <h2>Load a podcast</h2>
+          </div>
+        </div>
+        <label class="field-label" for="feedUrl">Podcast RSS feed</label>
+        <div class="feed-input-row">
+          <input id="feedUrl" type="url" placeholder="Paste a podcast RSS URL">
+          <button id="loadFeedBtn" class="button button-primary" type="button">Load</button>
+        </div>
+        <div class="action-pills">
+          <button id="saveSubscriptionBtn" class="button button-muted" type="button">Save subscription</button>
+          <button id="refreshBtn" class="button button-muted" type="button">Refresh</button>
+        </div>
+      </section>
 
-      <label class="label" for="episodeSearch">Search episodes</label>
-      <input id="episodeSearch" type="search" placeholder="Search title or description">
+      <section class="sidebar-card quick-actions-card">
+        <div class="card-header compact">
+          <div>
+            <p class="eyebrow">Utilities</p>
+            <h2>Session</h2>
+          </div>
+        </div>
+        <div class="quick-actions-grid">
+          <button id="installBtn" class="button button-ghost hidden" type="button">Install app</button>
+          {% if logged_in %}
+          <form method="post" action="{{ url_for('logout') }}" class="logout-form">
+            <button type="submit" class="button button-ghost danger-ghost">Log out</button>
+          </form>
+          {% endif %}
+        </div>
+        <div id="statusBox" class="status hidden"></div>
+      </section>
 
-      <section class="subscriptions-wrap">
-        <div class="section-header">
-          <h2>Subscriptions</h2>
+      <section id="libraryArea" class="sidebar-card subscriptions-card">
+        <div class="card-header compact">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2>Your subscriptions</h2>
+          </div>
           <span id="subscriptionCount" class="count-pill">0</span>
         </div>
         <div id="subscriptions" class="subscriptions"></div>
       </section>
 
-      <section class="downloads-wrap">
-        <div class="section-header">
-          <h2>Downloads on Pi</h2>
-          <span id="downloadCount" class="count-pill">0</span>
+      <section id="downloadsArea" class="sidebar-card downloads-card dark-card">
+        <div class="card-header compact inverse">
+          <div>
+            <p class="eyebrow">Offline</p>
+            <h2>Downloads on Pi</h2>
+          </div>
+          <span id="downloadCount" class="count-pill inverse">0</span>
         </div>
         <div id="downloadsList" class="downloads-list"></div>
       </section>
-
-      <div id="statusBox" class="status hidden"></div>
-
-      <section class="episodes-wrap collapsible-section collapsed" id="episodesSection">
-        <div class="section-header collapsible-header">
-          <div class="section-title-row">
-            <h2>Episodes</h2>
-            <span id="episodeCount" class="count-pill">0</span>
-          </div>
-          <button id="toggleEpisodesBtn" type="button" class="tiny collapse-toggle" aria-expanded="false" aria-controls="episodeListWrap">Show episodes</button>
-        </div>
-        <div id="episodeListWrap" class="collapsible-content hidden-block">
-          <div id="episodeList" class="episode-list"></div>
-        </div>
-      </section>
     </aside>
 
-    <main class="main-panel">
-      <section class="hero card">
-        <div class="hero-art-wrap">
-          <img id="podcastArt" class="hero-art hidden" alt="Podcast artwork">
-          <div id="heroArtFallback" class="hero-art fallback">🎧</div>
+    <main class="main-canvas">
+      <header class="topbar">
+        <div class="search-wrap">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input id="episodeSearch" type="search" placeholder="Search for episodes, guests, or topics...">
         </div>
-        <div class="hero-copy">
-          <div class="badge">Now selected</div>
-          <h2 id="episodeTitle">Choose an episode</h2>
-          <p id="podcastTitle" class="muted">Load a feed to begin</p>
-          <p id="episodeDescription" class="description">This version downloads episodes onto the Raspberry Pi and can also cache them in the installed app for offline listening on your phone.</p>
+        <div class="topbar-meta">
+          <div class="topbar-chip">
+            <span class="material-symbols-outlined">podcasts</span>
+            <span>Pi server</span>
+          </div>
+          <div class="topbar-chip accent">
+            <span class="material-symbols-outlined">wifi</span>
+            <span>LAN + PWA</span>
+          </div>
         </div>
-      </section>
+      </header>
 
-      <section class="player card">
-        <audio id="audioPlayer" preload="metadata" controlslist="nodownload"></audio>
-
-        <div class="controls-row controls-row-wrap">
-          <button id="backBtn" title="Back 15 seconds">-15</button>
-          <button id="playBtn" class="primary large">Play</button>
-          <button id="forwardBtn" title="Forward 30 seconds">+30</button>
-          <button id="downloadBtn" class="accent">Download to Pi</button>
-          <button id="offlineBtn">Cache on phone</button>
-          <div class="rate-group">
-            <button data-rate="1" class="rate-btn active">1x</button>
-            <button data-rate="1.25" class="rate-btn">1.25x</button>
-            <button data-rate="1.5" class="rate-btn">1.5x</button>
-            <button data-rate="2" class="rate-btn">2x</button>
+      <section id="playerArea" class="hero-section">
+        <div class="hero-primary panel">
+          <div class="hero-art-stack">
+            <div class="hero-art-frame">
+              <img id="podcastArt" class="hero-art hidden" alt="Podcast artwork">
+              <div id="heroArtFallback" class="hero-art-fallback">
+                <span class="material-symbols-outlined">graphic_eq</span>
+              </div>
+              <button id="playBtn" class="hero-play-button button button-primary" type="button" aria-label="Play selected episode">
+                <span class="material-symbols-outlined">play_arrow</span>
+              </button>
+            </div>
+          </div>
+          <div class="hero-copy">
+            <div class="hero-tags">
+              <span class="hero-badge">Now selected</span>
+              <span id="episodeMeta" class="hero-meta-text">No episode selected</span>
+            </div>
+            <h2 id="episodeTitle">Choose an episode</h2>
+            <p id="podcastTitle" class="hero-subtitle">Load a feed to begin</p>
+            <p id="episodeDescription" class="hero-description">This server-first player can store episodes on the Raspberry Pi and also cache downloaded audio on your phone for offline listening.</p>
+            <div class="hero-actions">
+              <button id="downloadBtn" class="button button-primary" type="button">
+                <span class="material-symbols-outlined">download</span>
+                <span>Download to Pi</span>
+              </button>
+              <button id="offlineBtn" class="button button-soft" type="button">
+                <span class="material-symbols-outlined">download_for_offline</span>
+                <span>Cache on phone</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="progress-wrap">
-          <span id="currentTime">0:00</span>
-          <input id="seekBar" type="range" min="0" max="1" value="0" step="1">
-          <span id="duration">0:00</span>
-        </div>
-
-        <div class="player-footer">
-          <span id="episodeMeta" class="muted">No episode selected</span>
-          <button id="installBtn" class="hidden">Install app</button>
-        </div>
+        <aside class="hero-secondary panel">
+          <div class="card-header compact">
+            <div>
+              <p class="eyebrow">Playback</p>
+              <h2>Quick controls</h2>
+            </div>
+          </div>
+          <div class="mini-control-grid">
+            <button id="backBtn" class="control-chip" type="button">
+              <span class="material-symbols-outlined">replay_10</span>
+              <span>-15 sec</span>
+            </button>
+            <button id="forwardBtn" class="control-chip" type="button">
+              <span class="material-symbols-outlined">forward_30</span>
+              <span>+30 sec</span>
+            </button>
+          </div>
+          <div class="rate-group panel-muted">
+            <button data-rate="1" class="rate-btn active" type="button">1x</button>
+            <button data-rate="1.25" class="rate-btn" type="button">1.25x</button>
+            <button data-rate="1.5" class="rate-btn" type="button">1.5x</button>
+            <button data-rate="2" class="rate-btn" type="button">2x</button>
+          </div>
+          <div class="helper-copy">
+            <p>Downloaded episodes stay available on the Pi. Cached episodes remain available in the installed PWA while you are away from home.</p>
+          </div>
+        </aside>
       </section>
 
-      <section class="info-grid">
-        <article class="card info-card">
-          <h3>How downloads work</h3>
-          <p><strong>Download to Pi</strong> stores the episode on the Raspberry Pi server so it is always available on your home network. <strong>Cache on phone</strong> asks the app to store that downloaded file in browser storage for offline playback.</p>
-        </article>
-        <article class="card info-card">
-          <h3>Pi deployment</h3>
-          <p>Run this on the Pi, keep it on the same Wi‑Fi network as your phone, and install the PWA from Chrome. For a more durable setup, run it behind a systemd service on boot.</p>
-        </article>
+      <section class="dashboard-grid">
+        <section class="panel player-panel">
+          <div class="card-header compact">
+            <div>
+              <p class="eyebrow">Now playing</p>
+              <h2>Player</h2>
+            </div>
+          </div>
+          <audio id="audioPlayer" preload="metadata" controlslist="nodownload"></audio>
+          <div class="progress-wrap">
+            <span id="currentTime">0:00</span>
+            <input id="seekBar" type="range" min="0" max="1" value="0" step="1">
+            <span id="duration">0:00</span>
+          </div>
+        </section>
+
+        <section class="panel info-panel">
+          <div class="card-header compact">
+            <div>
+              <p class="eyebrow">Server mode</p>
+              <h2>How this works</h2>
+            </div>
+          </div>
+          <div class="info-stack">
+            <article class="info-tile">
+              <span class="material-symbols-outlined">dns</span>
+              <div>
+                <h3>Raspberry Pi hosting</h3>
+                <p>The Pi fetches feeds, protects the app behind login, and serves downloaded media to your phone.</p>
+              </div>
+            </article>
+            <article class="info-tile">
+              <span class="material-symbols-outlined">cloud_download</span>
+              <div>
+                <h3>Dual download model</h3>
+                <p>Use Pi downloads for LAN streaming, then cache those files in the PWA for true mobile offline playback.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section id="episodesSection" class="panel episodes-panel collapsible-section">
+        <div class="card-header">
+          <div>
+            <p class="eyebrow">Episode browser</p>
+            <h2>All episodes</h2>
+          </div>
+          <div class="episodes-tools">
+            <span id="episodeCount" class="count-pill">0</span>
+            <button id="toggleEpisodesBtn" type="button" class="button button-muted collapse-toggle" aria-expanded="true" aria-controls="episodeListWrap">Hide episodes</button>
+          </div>
+        </div>
+        <div id="episodeListWrap" class="collapsible-content">
+          <div id="episodeList" class="episode-list redesigned-list"></div>
+        </div>
       </section>
     </main>
   </div>

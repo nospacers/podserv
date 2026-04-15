@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   subscriptions: "podcast-subscriptions-v2",
   progress: "podcast-progress-v2",
   lastFeed: "podcast-last-feed-v2",
+  episodesCollapsed: "podcast-episodes-collapsed-v1",
 };
 
 const SAMPLE_FEED = "https://feeds.simplecast.com/54nAGcIl";
@@ -35,6 +36,9 @@ const els = {
   duration: document.getElementById("duration"),
   episodeMeta: document.getElementById("episodeMeta"),
   installBtn: document.getElementById("installBtn"),
+  toggleEpisodesBtn: document.getElementById("toggleEpisodesBtn"),
+  episodesSection: document.getElementById("episodesSection"),
+  episodeListWrap: document.getElementById("episodeListWrap"),
   rateButtons: [...document.querySelectorAll(".rate-btn")],
 };
 
@@ -46,6 +50,33 @@ const state = {
   downloads: [],
   installPrompt: null,
 };
+
+function setPlayButtonState(isPlaying) {
+  if (!els.playBtn) return;
+  const icon = isPlaying ? "pause" : "play_arrow";
+  const label = isPlaying ? "Pause" : "Play";
+  els.playBtn.innerHTML = `<span class="material-symbols-outlined">${icon}</span><span>${label}</span>`;
+}
+
+function setEpisodesCollapsed(collapsed) {
+  if (!els.episodesSection || !els.toggleEpisodesBtn || !els.episodeListWrap) return;
+  els.episodesSection.classList.toggle("collapsed", collapsed);
+  els.toggleEpisodesBtn.setAttribute("aria-expanded", String(!collapsed));
+  els.toggleEpisodesBtn.textContent = collapsed ? "Show episodes" : "Hide episodes";
+  els.episodeListWrap.classList.toggle("hidden-block", collapsed);
+  localStorage.setItem(STORAGE_KEYS.episodesCollapsed, collapsed ? "1" : "0");
+}
+
+function initEpisodesCollapse() {
+  const saved = localStorage.getItem(STORAGE_KEYS.episodesCollapsed);
+  const defaultCollapsed = window.matchMedia && window.matchMedia("(max-width: 980px)").matches;
+  const collapsed = saved === null ? defaultCollapsed : saved === "1";
+  setEpisodesCollapsed(collapsed);
+  els.toggleEpisodesBtn?.addEventListener("click", () => {
+    const next = !els.episodesSection.classList.contains("collapsed");
+    setEpisodesCollapsed(next);
+  });
+}
 
 function getJson(key, fallback) {
   try {
@@ -257,6 +288,7 @@ function selectEpisode(episode) {
     els.audioPlayer.removeAttribute("src");
     els.audioPlayer.load();
     els.playBtn.disabled = true;
+    setPlayButtonState(false);
     els.downloadBtn.disabled = true;
     els.offlineBtn.disabled = true;
     showStatus("This episode does not include a playable audio URL in the feed.");
@@ -265,6 +297,7 @@ function selectEpisode(episode) {
 
   clearStatus();
   els.playBtn.disabled = false;
+  setPlayButtonState(false);
   els.downloadBtn.disabled = !episode.audio_url;
   els.offlineBtn.disabled = !episode.download_url;
   els.audioPlayer.src = src;
@@ -482,15 +515,15 @@ function bindEvents() {
   });
 
   els.audioPlayer.addEventListener("play", () => {
-    els.playBtn.textContent = "Pause";
+    setPlayButtonState(true);
   });
 
   els.audioPlayer.addEventListener("pause", () => {
-    els.playBtn.textContent = "Play";
+    setPlayButtonState(false);
   });
 
   els.audioPlayer.addEventListener("ended", () => {
-    els.playBtn.textContent = "Play";
+    setPlayButtonState(false);
   });
 
   els.rateButtons.forEach((btn) => {

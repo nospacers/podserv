@@ -1,48 +1,605 @@
 <!doctype html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#6c45af">
   <meta name="robots" content="noindex,nofollow">
   <title>Login · Podcast Pi Player</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <style>
-    .login-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-    .login-card { width: min(460px, 100%); padding: 28px; }
-    .login-card form { display: grid; gap: 14px; }
-    .login-card h1 { margin: 0 0 8px; }
-    .login-card p { margin: 0; }
-    .error-box { padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(239,68,68,.35); background: rgba(239,68,68,.12); color: #fecaca; }
+    :root {
+      --primary: #6c45af;
+      --primary-soft: #b78efe;
+      --tertiary-soft: #ff8fa9;
+      --bg: #f6f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f0f1f3;
+      --surface-mid: #e7e8ea;
+      --text: #2d2f31;
+      --text-soft: #5a5c5d;
+      --text-faint: #757779;
+      --border: rgba(172, 173, 175, 0.22);
+      --danger-bg: rgba(180, 19, 64, 0.08);
+      --danger-border: rgba(180, 19, 64, 0.18);
+      --danger-text: #8b1237;
+      --shadow: 0 24px 48px rgba(45, 47, 49, 0.06);
+      --shadow-soft: 0 14px 36px rgba(45, 47, 49, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+      position: relative;
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: min(42vw, 520px);
+      height: min(42vw, 520px);
+      left: -8%;
+      top: -12%;
+      background: rgba(108, 69, 175, 0.12);
+    }
+    body::after {
+      width: min(32vw, 420px);
+      height: min(32vw, 420px);
+      right: -8%;
+      bottom: -10%;
+      background: rgba(255, 143, 169, 0.09);
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+      line-height: 1;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(1080px, 100%);
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      border-radius: 32px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.92);
+      box-shadow: var(--shadow);
+      min-height: min(760px, calc(100vh - 48px));
+      border: 1px solid rgba(255,255,255,0.4);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-panel {
+      position: relative;
+      padding: 48px;
+      background: linear-gradient(180deg, rgba(240,241,243,0.95) 0%, rgba(231,232,234,0.98) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 28px;
+      overflow: hidden;
+    }
+    .brand-panel::after {
+      content: "music_note";
+      position: absolute;
+      right: 24px;
+      top: 16px;
+      font-family: 'Material Symbols Outlined';
+      font-size: 220px;
+      color: rgba(108, 69, 175, 0.05);
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 48;
+      pointer-events: none;
+    }
+
+    .brand-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%);
+      color: white;
+      box-shadow: 0 10px 20px rgba(108, 69, 175, 0.24);
+    }
+    .brand-name,
+    .headline,
+    .panel-title,
+    .artwork-title {
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    .brand-name {
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--primary);
+    }
+    .headline {
+      margin: 0;
+      font-size: clamp(2.4rem, 4vw, 4rem);
+      line-height: 1.04;
+      letter-spacing: -0.05em;
+      font-weight: 800;
+      max-width: 12ch;
+    }
+    .headline .accent { color: var(--primary); }
+    .brand-copy {
+      margin: 0;
+      max-width: 33ch;
+      font-size: 1.06rem;
+      line-height: 1.7;
+      color: var(--text-soft);
+    }
+
+    .art-card {
+      position: relative;
+      border-radius: 26px;
+      overflow: hidden;
+      min-height: 280px;
+      box-shadow: var(--shadow-soft);
+      background: radial-gradient(circle at top right, rgba(183,142,254,0.35), rgba(108,69,175,0.85));
+    }
+    .art-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .art-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.48) 100%);
+    }
+    .art-content {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 22px;
+      color: white;
+      z-index: 1;
+    }
+    .artwork-title {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .artwork-meta {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    .form-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 42px 48px;
+      background: rgba(255,255,255,0.88);
+    }
+    .mobile-brand {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      color: var(--primary);
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .panel-title {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    .panel-copy {
+      margin: 0;
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+    .panel-header { margin-bottom: 34px; }
+
+    .login-form { display: grid; gap: 22px; }
+    .field { display: grid; gap: 8px; }
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .label {
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-soft);
+      margin-left: 2px;
+    }
+    .field-shell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      border-radius: 20px;
+      background: var(--surface-soft);
+      border: 1px solid transparent;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .field-shell:focus-within {
+      border-color: rgba(108, 69, 175, 0.24);
+      box-shadow: 0 0 0 4px rgba(108, 69, 175, 0.08);
+      background: #f7f5fb;
+    }
+    .field-shell .icon {
+      position: absolute;
+      left: 16px;
+      color: #8a8d9c;
+      pointer-events: none;
+    }
+    .field-shell input {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font: inherit;
+      color: var(--text);
+      padding: 18px 18px 18px 50px;
+    }
+    .field-shell input::placeholder { color: #9ca0ac; }
+    .field-toggle {
+      position: absolute;
+      right: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 0;
+      background: transparent;
+      color: #8a8d9c;
+      cursor: pointer;
+      transition: color 0.18s ease, background 0.18s ease;
+    }
+    .field-toggle:hover {
+      color: var(--primary);
+      background: rgba(108, 69, 175, 0.08);
+    }
+
+    .helper-link {
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 0.78rem;
+      text-decoration: none;
+      opacity: 0.95;
+      pointer-events: none;
+      cursor: default;
+    }
+    .remember-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-soft);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .remember-row input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .primary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      padding: 18px 20px;
+      color: white;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%);
+      box-shadow: 0 12px 24px rgba(108, 69, 175, 0.24);
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+    }
+    .primary-button:hover { opacity: 0.95; transform: translateY(-1px); }
+    .primary-button:active { transform: scale(0.985); }
+
+    .error-box {
+      margin-bottom: 18px;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: var(--danger-text);
+      font-weight: 700;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 8px 0 0;
+      color: #a1a4af;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: rgba(172, 173, 175, 0.3);
+    }
+
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .social-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(172, 173, 175, 0.22);
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      font-weight: 800;
+      text-decoration: none;
+      pointer-events: none;
+      cursor: default;
+    }
+    .social-button svg { width: 20px; height: 20px; }
+
+    .footer-note {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--text-soft);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .footer-note strong { color: var(--primary); }
+
+    .floating-player {
+      position: fixed;
+      right: 30px;
+      bottom: 30px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: min(340px, calc(100vw - 48px));
+      padding: 14px 16px 14px 14px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.72);
+      box-shadow: 0 18px 36px rgba(45, 47, 49, 0.09);
+      border: 1px solid rgba(255,255,255,0.5);
+      backdrop-filter: blur(20px);
+    }
+    .floating-player .cover {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.4);
+    }
+    .floating-player .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .floating-meta {
+      min-width: 0;
+      flex: 1;
+    }
+    .floating-title {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      font-size: 0.96rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .floating-subtitle {
+      margin: 4px 0 0;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+    .floating-play {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(108, 69, 175, 0.1);
+      color: var(--primary);
+    }
+
+    @media (max-width: 960px) {
+      .shell {
+        grid-template-columns: 1fr;
+        max-width: 640px;
+        min-height: auto;
+      }
+      .brand-panel {
+        display: none;
+      }
+      .form-panel {
+        padding: 34px 26px;
+      }
+      .mobile-brand { display: inline-flex; }
+      .floating-player { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 14px; }
+      .shell { border-radius: 26px; }
+      .form-panel { padding: 28px 20px; }
+      .panel-title { font-size: 1.7rem; }
+      .social-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="login-shell">
-    <section class="card login-card">
-      <div class="brand-row" style="margin-bottom: 18px;">
-        <div class="brand-icon">🔐</div>
-        <div>
-          <h1>Podcast Pi Player</h1>
-          <p class="muted">Sign in to access your server</p>
+  <main class="shell">
+    <section class="brand-panel" aria-hidden="true">
+      <div>
+        <div class="brand-lockup">
+          <div class="brand-icon">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;">graphic_eq</span>
+          </div>
+          <div class="brand-name">Podcast Pi Player</div>
+        </div>
+
+        <div style="margin-top: 56px; position: relative; z-index: 1;">
+          <h1 class="headline">Enter the <span class="accent">listening room</span></h1>
+          <p class="brand-copy">Sign in to your private podcast server and pick up exactly where you left off across feeds, downloads, and offline listening.</p>
         </div>
       </div>
+
+      <div class="art-card">
+        <img src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80" alt="Studio microphone with purple lighting">
+        <div class="art-overlay"></div>
+        <div class="art-content">
+          <p class="artwork-title">Your archive, on demand</p>
+          <p class="artwork-meta">Self-hosted • Secure access</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-panel">
+      <div class="mobile-brand">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;">graphic_eq</span>
+        <span>Podcast Pi Player</span>
+      </div>
+
+      <header class="panel-header">
+        <h1 class="panel-title">Welcome back</h1>
+        <p class="panel-copy">Continue listening from your private server.</p>
+      </header>
+
       {% if error %}
       <div class="error-box">{{ error }}</div>
       {% endif %}
-      <form method="post" action="{{ url_for('login') }}">
+
+      <form class="login-form" method="post" action="{{ url_for('login') }}">
         <input type="hidden" name="next" value="{{ next_url }}">
-        <div>
+
+        <div class="field">
           <label class="label" for="username">Username</label>
-          <input id="username" name="username" type="text" autocomplete="username" required>
+          <div class="field-shell">
+            <span class="material-symbols-outlined icon">person</span>
+            <input id="username" name="username" type="text" autocomplete="username" placeholder="Enter your username" required>
+          </div>
         </div>
-        <div>
-          <label class="label" for="password">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <div class="field">
+          <div class="field-row">
+            <label class="label" for="password">Password</label>
+            <span class="helper-link" aria-hidden="true">Private access</span>
+          </div>
+          <div class="field-shell">
+            <span class="material-symbols-outlined icon">lock</span>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+            <button type="button" class="field-toggle" id="togglePassword" aria-label="Show password">
+              <span class="material-symbols-outlined" id="togglePasswordIcon">visibility</span>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="primary">Sign in</button>
+
+        <label class="remember-row">
+          <input id="remember" type="checkbox" checked disabled>
+          <span>Keep me in the flow on this device</span>
+        </label>
+
+        <button type="submit" class="primary-button">Sign In</button>
       </form>
-      <p class="muted" style="margin-top: 14px;">This login protects both the web app and the API endpoints.</p>
+
+      <div class="divider">Server access</div>
+
+      <div class="social-grid" aria-hidden="true">
+        <div class="social-button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+          <span>Private server</span>
+        </div>
+        <div class="social-button">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;">podcasts</span>
+          <span>Protected feed API</span>
+        </div>
+      </div>
+
+      <p class="footer-note">This login protects the web app, downloads, and API endpoints on your internet-facing server.</p>
     </section>
+  </main>
+
+  <div class="floating-player" aria-hidden="true">
+    <div class="cover">
+      <img src="https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=400&q=80" alt="Album art">
+    </div>
+    <div class="floating-meta">
+      <p class="floating-title">Midnight Solitude</p>
+      <p class="floating-subtitle">Offline Ready</p>
+    </div>
+    <button class="floating-play" type="button">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;">play_arrow</span>
+    </button>
   </div>
+
+  <script>
+    const toggleButton = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    if (toggleButton && passwordInput && toggleIcon) {
+      toggleButton.addEventListener('click', () => {
+        const showing = passwordInput.type === 'text';
+        passwordInput.type = showing ? 'password' : 'text';
+        toggleIcon.textContent = showing ? 'visibility' : 'visibility_off';
+        toggleButton.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+      });
+    }
+  </script>
 </body>
 </html>
