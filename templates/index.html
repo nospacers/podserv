@@ -62,12 +62,17 @@
 
       <div id="statusBox" class="status hidden"></div>
 
-      <section class="episodes-wrap">
-        <div class="section-header">
-          <h2>Episodes</h2>
-          <span id="episodeCount" class="count-pill">0</span>
+      <section class="episodes-wrap collapsible-section collapsed" id="episodesSection">
+        <div class="section-header collapsible-header">
+          <div class="section-title-row">
+            <h2>Episodes</h2>
+            <span id="episodeCount" class="count-pill">0</span>
+          </div>
+          <button id="toggleEpisodesBtn" type="button" class="tiny collapse-toggle" aria-expanded="false" aria-controls="episodeListWrap">Show episodes</button>
         </div>
-        <div id="episodeList" class="episode-list"></div>
+        <div id="episodeListWrap" class="collapsible-content hidden-block">
+          <div id="episodeList" class="episode-list"></div>
+        </div>
       </section>
     </aside>
 
