@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Self-hosted podcast player for Raspberry Pi with downloads and offline playback.">
+  <title>Podcast Pi Player</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar card">
+      <div class="brand-row">
+        <div class="brand-icon">🎙️</div>
+        <div>
+          <h1>Podcast Pi Player</h1>
+          <p class="muted">Raspberry Pi server + PWA offline mode</p>
+        </div>
+      </div>
+
+      <label class="label" for="feedUrl">Podcast RSS feed</label>
+      <div class="input-row">
+        <input id="feedUrl" type="url" placeholder="Paste a podcast RSS URL">
+        <button id="loadFeedBtn" class="primary">Load</button>
+      </div>
+
+      <div class="sub-actions">
+        <button id="saveSubscriptionBtn">Save</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+
+      <label class="label" for="episodeSearch">Search episodes</label>
+      <input id="episodeSearch" type="search" placeholder="Search title or description">
+
+      <section class="subscriptions-wrap">
+        <div class="section-header">
+          <h2>Subscriptions</h2>
+          <span id="subscriptionCount" class="count-pill">0</span>
+        </div>
+        <div id="subscriptions" class="subscriptions"></div>
+      </section>
+
+      <section class="downloads-wrap">
+        <div class="section-header">
+          <h2>Downloads on Pi</h2>
+          <span id="downloadCount" class="count-pill">0</span>
+        </div>
+        <div id="downloadsList" class="downloads-list"></div>
+      </section>
+
+      <div id="statusBox" class="status hidden"></div>
+
+      <section class="episodes-wrap">
+        <div class="section-header">
+          <h2>Episodes</h2>
+          <span id="episodeCount" class="count-pill">0</span>
+        </div>
+        <div id="episodeList" class="episode-list"></div>
+      </section>
+    </aside>
+
+    <main class="main-panel">
+      <section class="hero card">
+        <div class="hero-art-wrap">
+          <img id="podcastArt" class="hero-art hidden" alt="Podcast artwork">
+          <div id="heroArtFallback" class="hero-art fallback">🎧</div>
+        </div>
+        <div class="hero-copy">
+          <div class="badge">Now selected</div>
+          <h2 id="episodeTitle">Choose an episode</h2>
+          <p id="podcastTitle" class="muted">Load a feed to begin</p>
+          <p id="episodeDescription" class="description">This version downloads episodes onto the Raspberry Pi and can also cache them in the installed app for offline listening on your phone.</p>
+        </div>
+      </section>
+
+      <section class="player card">
+        <audio id="audioPlayer" preload="metadata" controlslist="nodownload"></audio>
+
+        <div class="controls-row controls-row-wrap">
+          <button id="backBtn" title="Back 15 seconds">-15</button>
+          <button id="playBtn" class="primary large">Play</button>
+          <button id="forwardBtn" title="Forward 30 seconds">+30</button>
+          <button id="downloadBtn" class="accent">Download to Pi</button>
+          <button id="offlineBtn">Cache on phone</button>
+          <div class="rate-group">
+            <button data-rate="1" class="rate-btn active">1x</button>
+            <button data-rate="1.25" class="rate-btn">1.25x</button>
+            <button data-rate="1.5" class="rate-btn">1.5x</button>
+            <button data-rate="2" class="rate-btn">2x</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <span id="currentTime">0:00</span>
+          <input id="seekBar" type="range" min="0" max="1" value="0" step="1">
+          <span id="duration">0:00</span>
+        </div>
+
+        <div class="player-footer">
+          <span id="episodeMeta" class="muted">No episode selected</span>
+          <button id="installBtn" class="hidden">Install app</button>
+        </div>
+      </section>
+
+      <section class="info-grid">
+        <article class="card info-card">
+          <h3>How downloads work</h3>
+          <p><strong>Download to Pi</strong> stores the episode on the Raspberry Pi server so it is always available on your home network. <strong>Cache on phone</strong> asks the app to store that downloaded file in browser storage for offline playback.</p>
+        </article>
+        <article class="card info-card">
+          <h3>Pi deployment</h3>
+          <p>Run this on the Pi, keep it on the same Wi‑Fi network as your phone, and install the PWA from Chrome. For a more durable setup, run it behind a systemd service on boot.</p>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
