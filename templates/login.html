@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Login · Podcast Pi Player</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    .login-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .login-card { width: min(460px, 100%); padding: 28px; }
+    .login-card form { display: grid; gap: 14px; }
+    .login-card h1 { margin: 0 0 8px; }
+    .login-card p { margin: 0; }
+    .error-box { padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(239,68,68,.35); background: rgba(239,68,68,.12); color: #fecaca; }
+  </style>
+</head>
+<body>
+  <div class="login-shell">
+    <section class="card login-card">
+      <div class="brand-row" style="margin-bottom: 18px;">
+        <div class="brand-icon">🔐</div>
+        <div>
+          <h1>Podcast Pi Player</h1>
+          <p class="muted">Sign in to access your server</p>
+        </div>
+      </div>
+      {% if error %}
+      <div class="error-box">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="{{ url_for('login') }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+        <div>
+          <label class="label" for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required>
+        </div>
+        <div>
+          <label class="label" for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="primary">Sign in</button>
+      </form>
+      <p class="muted" style="margin-top: 14px;">This login protects both the web app and the API endpoints.</p>
+    </section>
+  </div>
+</body>
+</html>

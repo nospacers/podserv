@@ -120,3 +120,52 @@ sudo systemctl status podcastpi.service
 - Downloads are sequential and handled inside the Flask process
 - Very large libraries would benefit from background job handling and a richer database schema
 - For internet exposure, put it behind HTTPS and authentication before opening it outside your local network
+
+## Password protection for internet exposure
+
+This version includes built-in login protection using a Flask session cookie. Before exposing the app to the internet, set these environment variables on the Pi:
+
+- `PODCASTPI_USERNAME`
+- `PODCASTPI_PASSWORD_HASH`
+- `PODCASTPI_SECRET_KEY`
+- optionally `PODCASTPI_SECURE_COOKIE=1` when you are serving the app over HTTPS
+
+### Generate a password hash
+
+You can generate a hash directly on the Pi with Python:
+
+```bash
+python3 - <<'PY'
+from werkzeug.security import generate_password_hash
+print(generate_password_hash('replace-with-your-password'))
+PY
+```
+
+Copy the printed hash into `PODCASTPI_PASSWORD_HASH`.
+
+### Example systemd service with authentication
+
+```ini
+[Unit]
+Description=Podcast Pi Player
+After=network.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/podcast_pi_player
+Environment="PATH=/home/pi/podcast_pi_player/.venv/bin"
+Environment="PODCASTPI_USERNAME=admin"
+Environment="PODCASTPI_PASSWORD_HASH=PASTE_HASH_HERE"
+Environment="PODCASTPI_SECRET_KEY=replace-with-a-long-random-secret"
+# Set this to 1 only when the app is served behind HTTPS
+Environment="PODCASTPI_SECURE_COOKIE=0"
+ExecStart=/home/pi/podcast_pi_player/.venv/bin/python /home/pi/podcast_pi_player/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Recommended reverse proxy
+
+For a public deployment, put the app behind Nginx or Caddy with HTTPS. The built-in password gate is a strong first layer, but you should still run it behind TLS so your password is never sent in clear text.

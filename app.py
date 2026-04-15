@@ -3,11 +3,13 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import secrets
 import sqlite3
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 import feedparser
@@ -16,24 +18,136 @@ from flask import (
     Flask,
     Response,
     jsonify,
+    redirect,
     render_template,
     request,
     send_from_directory,
+    session,
+    url_for,
 )
+from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DOWNLOAD_DIR = DATA_DIR / "downloads"
 DB_PATH = DATA_DIR / "podcasts.db"
 DEFAULT_TIMEOUT = 20
-USER_AGENT = "PodcastPiPlayer/2.0 (+https://localhost)"
+USER_AGENT = "PodcastPiPlayer/2.1 (+https://localhost)"
 CHUNK_SIZE = 1024 * 256
+DEFAULT_USERNAME = os.environ.get("PODCASTPI_USERNAME", "admin")
+DEFAULT_PASSWORD_HASH = os.environ.get("PODCASTPI_PASSWORD_HASH", "")
+AUTH_ENABLED = os.environ.get("PODCASTPI_AUTH_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+SECRET_KEY = os.environ.get("PODCASTPI_SECRET_KEY") or secrets.token_hex(32)
 
 DATA_DIR.mkdir(exist_ok=True)
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 10
+app.config["SECRET_KEY"] = SECRET_KEY
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("PODCASTPI_SECURE_COOKIE", "0").strip().lower() in {"1", "true", "yes"}
+
+
+def is_authenticated() -> bool:
+    return session.get("authenticated") is True
+
+
+def wants_json() -> bool:
+    path = request.path or ""
+    if path.startswith("/api/"):
+        return True
+    return "application/json" in request.headers.get("Accept", "")
+
+
+def require_login(view: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(view)
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+        if not AUTH_ENABLED or is_authenticated():
+            return view(*args, **kwargs)
+        if wants_json():
+            return jsonify({"error": "Authentication required."}), 401
+        return redirect(url_for("login", next=request.full_path if request.query_string else request.path))
+
+    return wrapped
+
+
+@app.before_request
+def enforce_authentication() -> Any:
+    if not AUTH_ENABLED:
+        return None
+
+    public_paths = {
+        "/login",
+        "/logout",
+        "/health",
+        "/favicon.ico",
+    }
+    if request.path in public_paths:
+        return None
+
+    if request.path.startswith("/static/"):
+        return None
+
+    if is_authenticated():
+        return None
+
+    if wants_json():
+        return jsonify({"error": "Authentication required."}), 401
+
+    return redirect(url_for("login", next=request.full_path if request.query_string else request.path))
+
+
+@app.context_processor
+def inject_auth_config() -> dict[str, Any]:
+    return {
+        "auth_enabled": AUTH_ENABLED,
+        "logged_in": is_authenticated(),
+        "current_user": session.get("username", ""),
+    }
+
+
+@app.get("/auth/hash")
+def auth_hash_help() -> Any:
+    password = clean_text(request.args.get("password"))
+    if not password:
+        return jsonify({
+            "error": "Provide ?password=your-password to generate a hash.",
+            "example": "/auth/hash?password=change-me",
+        }), 400
+    return jsonify({"hash": generate_password_hash(password)})
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login() -> Any:
+    if not AUTH_ENABLED:
+        return redirect(url_for("index"))
+
+    error = ""
+    next_url = clean_text(request.values.get("next")) or url_for("index")
+    if request.method == "POST":
+        username = clean_text(request.form.get("username"))
+        password = clean_text(request.form.get("password"))
+        if not DEFAULT_PASSWORD_HASH:
+            error = "Authentication is enabled, but PODCASTPI_PASSWORD_HASH is not set on the server."
+        elif username != DEFAULT_USERNAME or not check_password_hash(DEFAULT_PASSWORD_HASH, password):
+            error = "Invalid username or password."
+        else:
+            session.clear()
+            session["authenticated"] = True
+            session["username"] = username
+            return redirect(next_url if next_url.startswith("/") else url_for("index"))
+
+    if is_authenticated():
+        return redirect(url_for("index"))
+    return render_template("login.html", error=error, next_url=next_url)
+
+
+@app.post("/logout")
+def logout() -> Any:
+    session.clear()
+    return redirect(url_for("login"))
 
 
 def get_db() -> sqlite3.Connection:
@@ -334,16 +448,18 @@ def download_episode(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 @app.get("/")
+@require_login
 def index() -> str:
     return render_template("index.html")
 
 
 @app.get("/health")
 def health() -> Any:
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "auth_enabled": AUTH_ENABLED})
 
 
 @app.get("/api/feed")
+@require_login
 def api_feed() -> Any:
     feed_url = clean_text(request.args.get("url"))
     if not feed_url:
@@ -366,6 +482,7 @@ def api_feed() -> Any:
 
 
 @app.get("/api/downloads")
+@require_login
 def api_downloads() -> Any:
     rows = list_downloads()
     payload = []
@@ -380,6 +497,7 @@ def api_downloads() -> Any:
 
 
 @app.post("/api/download")
+@require_login
 def api_download() -> Any:
     payload = request.get_json(silent=True) or {}
     try:
@@ -397,6 +515,7 @@ def api_download() -> Any:
 
 
 @app.delete("/api/download/<int:download_id>")
+@require_login
 def api_delete_download(download_id: int) -> Any:
     deleted = delete_download(download_id)
     if not deleted:
@@ -405,6 +524,7 @@ def api_delete_download(download_id: int) -> Any:
 
 
 @app.get("/media/<path:filename>")
+@require_login
 def media_file(filename: str) -> Response:
     return send_from_directory(DOWNLOAD_DIR, filename, conditional=True)
 
