@@ -91,15 +91,24 @@
         <div id="subscriptions" class="subscriptions"></div>
       </section>
 
-      <section id="downloadsArea" class="sidebar-card downloads-card dark-card">
-        <div class="card-header compact inverse">
+      <section id="downloadsArea" class="sidebar-card downloads-card">
+        <div class="card-header compact">
           <div>
             <p class="eyebrow">Offline</p>
             <h2>Downloads on Pi</h2>
           </div>
-          <span id="downloadCount" class="count-pill inverse">0</span>
+          <span id="downloadCount" class="count-pill">0</span>
         </div>
-        <div id="downloadsList" class="downloads-list"></div>
+        <div class="downloads-intro panel-muted">
+          <div class="downloads-intro-icon">
+            <span class="material-symbols-outlined">download_done</span>
+          </div>
+          <div>
+            <p class="downloads-intro-title">Server-side episode storage</p>
+            <p class="downloads-intro-copy">Episodes saved here stay available from your Raspberry Pi for quick playback and optional phone caching.</p>
+          </div>
+        </div>
+        <div id="downloadsList" class="downloads-list light-downloads-list"></div>
       </section>
     </aside>
 

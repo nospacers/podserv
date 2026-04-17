@@ -147,6 +147,43 @@ button {
   box-shadow: var(--shadow-soft);
 }
 .sidebar-card { padding: 18px; }
+.downloads-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(249,245,255,0.96) 100%);
+}
+.downloads-intro {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, rgba(108,69,175,0.08) 0%, rgba(183,142,254,0.14) 100%);
+  border: 1px solid rgba(108,69,175,0.08);
+}
+.downloads-intro-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, #9c73ef 100%);
+  color: #fff;
+  box-shadow: 0 12px 20px rgba(108, 69, 175, 0.18);
+}
+.downloads-intro-title {
+  margin: 0 0 4px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.downloads-intro-copy {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
 .dark-card {
   background: linear-gradient(180deg, #1d1b29 0%, #16141f 100%);
   border-color: rgba(255,255,255,0.06);
@@ -309,9 +346,9 @@ button {
   color: var(--text);
 }
 .download-item {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.08);
-  color: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+  border-color: rgba(108, 69, 175, 0.10);
+  color: var(--text);
 }
 .download-item strong,
 .episode-item strong {
@@ -332,13 +369,14 @@ button {
 .download-actions .tiny {
   padding: 0.55rem 0.8rem;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.07);
-  color: inherit;
+  border: 1px solid rgba(108, 69, 175, 0.10);
+  background: rgba(108, 69, 175, 0.06);
+  color: var(--primary-strong);
 }
 .download-actions .danger {
-  color: #ffc2cc;
-  border-color: rgba(255, 128, 148, 0.16);
+  color: #b42343;
+  border-color: rgba(180, 35, 67, 0.12);
+  background: rgba(180, 35, 67, 0.06);
 }
 
 .main-canvas {
@@ -648,4 +686,22 @@ input[type="range"] {
   .mini-control-grid,
   .rate-group { grid-template-columns: 1fr 1fr; }
   .redesigned-list { grid-template-columns: 1fr; max-height: 48vh; }
+}
+
+
+.light-downloads-list .download-item strong {
+  color: var(--text);
+}
+.light-downloads-list .download-item .meta {
+  color: var(--text-soft);
+}
+.light-downloads-list:empty::before {
+  content: "Downloaded episodes will appear here.";
+  display: block;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.72);
+  border: 1px dashed rgba(108, 69, 175, 0.18);
+  color: var(--text-soft);
+  font-size: 0.84rem;
 }
